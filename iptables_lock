@@ -1,9 +1,9 @@
+#!/bin/bash
+
 # Idea taken from PF(packetFilter Firewall)
 # Create a sort of stateful firewall for your IPtables setup with logging of blocked a-holes.
 # modify as needed, this will "hide" your server/device from most port scanning. And any IP detected scanning ports
 # is blocked from any form of connection.
-
-#!/bin/bash
 
 SAFE_IP=" " # The IP you SSH from.
 SRV_IP= " " # The ip of the device you are trying to protect.

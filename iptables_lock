@@ -1,9 +1,21 @@
+# Idea taken from PF(packetFilter Firewall)
+# Create a sort of stateful firewall for your IPtables setup with logging of blocked a-holes.
+# modify as needed, this will "hide" your server/device from most port scanning. And any IP detected scanning ports
+# is blocked from any form of connection.
+
 #!/bin/bash
+
+SAFE_IP=" " # The IP you SSH from.
+SRV_IP= " " # The ip of the device you are trying to protect.
+
+# Nat on Input, pushing traffic through the log chain, so it can be logged if, it matches the rule.
 iptables -N Logging
 iptables -A INPUT -j Logging
 iptables -A Logging -m limit --limit 1/day -j LOG --log-prefix "IPTables-Dropped: " --log-level 4
 iptables -A Logging -j RETURN
-iptables -A INPUT -s #<your public ipv4 address> -j Logging
+
+# Traffic logging based on matching rule, and begin the filter out process.
+iptables -A INPUT -s $SRV_IP -j Logging #This is so your IP cannot be spoofed, or reduces the chances of it.
 iptables -A INPUT -i eth0 -s 127.0.0.0/8 -j Logging
 iptables -A INPUT -p icmp -m limit --limit 2/second --limit-burst 2 -j Logging
 iptables -A INPUT -p icmp -j Logging
@@ -12,12 +24,17 @@ iptables -A INPUT -p tcp ! --syn -m state --state NEW -j Logging
 iptables -A INPUT -f -j Logging
 iptables -A INPUT -p tcp --tcp-flags ALL ALL -j Logging
 iptables -A INPUT -p tcp --tcp-flags ALL NONE -j Logging
+
+#Accept rules
 iptables -A OUTGOING -p tcp -dport --dport 80 -j ACCEPT
 iptables -A INPUT -p tcp -m state --state NEW -m limit --limit 2/second -j ACCEPT
+iptables -A INPUT $SAFE_IP -p tcp -dport --dport 22 -j ACCEPT
+
+#drop rules
 iptables -A INPUT -p tcp --tcp-flags ALL ALL -j DROP
 iptables -A INPUT -p tcp --tcp-flags ALL NONE -j DROP
 iptables -A INPUT -f -j DROP
 iptables -A INPUT -p tcp ! --syn -m state --state NEW -j DROP
 iptables -A INPUT -p icmp -j DROP
 iptables -A INPUT -i eth0 -s 127.0.0.0/8 -j DROP
-iptables -A INPUT -s #<your public ipv4 address> -j DROP
+iptables -A INPUT -s $SRV_IP -j DROP

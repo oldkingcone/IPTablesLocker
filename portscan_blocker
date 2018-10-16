@@ -1,0 +1,17 @@
+#!/bin/bash
+SAFE_IP="" # the host you connect from.
+LOOP="127.0.0.1" # blocking the local host address will cause some bad affects.
+for item in $(cat /var/log/messages | grep IPTables | cut -d" " -f4 | cut -d"=" -f1)
+  if [ $item != "$(iptables -S | grep $item | cut -d' ' -f4 | cut -d'/' -f1)" ]
+  then
+      if [ $item != $SAFE_IP ]
+      then
+        if [ $item != $LOOP ]
+        then
+          iptables -I INPUT -s $item -j DROP
+          echo "Banned "$item" for port scanning on: "$(date)
+       fi
+     fi
+  fi
+done
+        

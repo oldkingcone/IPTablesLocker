@@ -8,7 +8,7 @@ for item in $(cat /var/log/messages | grep IPTables | cut -d" " -f4 | cut -d"=" 
       then
         if [ $item != $LOOP ]
         then
-          iptables -I INPUT -s $item -j DROP
+          iptables -A INPUT -s $item -j DROP
           echo "Banned "$item" for port scanning on: "$(date)
        fi
      fi
